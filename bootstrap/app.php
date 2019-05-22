@@ -8,17 +8,18 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$config = include __DIR__ . '/../config/database.php';
+$configD = include __DIR__ . '/../config/database.php';
+$configW = include __DIR__ . '/../config/websocket.php';
 
 $capsule= new Illuminate\Database\Capsule\Manager();
 $capsule->addConnection([
-    'driver'    => $config['mysql']['driver'],
-    'host'      => $config['mysql']['host'],
-    'database'  => $config['mysql']['database'],
-    'username'  => $config['mysql']['username'],
-    'password'  => $config['mysql']['password'],
-    'charset'   => $config['mysql']['charset'],
-    'collation' => $config['mysql']['collation'],
-    'prefix'    => $config['mysql']['prefix']
+    'driver'    => $configD['mysql']['driver'],
+    'host'      => $configD['mysql']['host'],
+    'database'  => $configD['mysql']['database'],
+    'username'  => $configD['mysql']['username'],
+    'password'  => $configD['mysql']['password'],
+    'charset'   => $configD['mysql']['charset'],
+    'collation' => $configD['mysql']['collation'],
+    'prefix'    => $configD['mysql']['prefix']
 ]);
 $capsule->setAsGlobal();
