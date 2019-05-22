@@ -1,0 +1,23 @@
+{
+    "name": "rafael.hirooka/web-socket-server",
+    "authors": [
+        {
+            "name": "rafael.hirooka",
+            "email": "rafaelhirooka@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.1",
+        "cboden/ratchet": "^0.4.1",
+        "illuminate/database": "^5.8",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": [
+            "config/database.php"
+        ]
+    }
+}

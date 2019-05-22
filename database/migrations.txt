@@ -1,0 +1,2 @@
+create table active_connections (active_connection_id varchar(190) primary key, connection_id varchar(90));
+create table subscribes (subscribe_id varchar(190) primary key, connection_id varchar(190), channel varchar(80));
