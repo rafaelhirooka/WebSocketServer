@@ -20,11 +20,13 @@ class Sender implements MessageComponentInterface
     protected $clients;
     private $subscriptions;
     private $users;
+    private $secret;
 
-    public function __construct() {
+    public function __construct(string $secret) {
         $this->clients = new \SplObjectStorage;
         $this->subscriptions = [];
         $this->users = [];
+        $this->secret = $secret;
     }
 
     function onError(ConnectionInterface $conn, \Exception $e) {
@@ -53,8 +55,16 @@ class Sender implements MessageComponentInterface
         try {
             $msg = is_string($msg) ? (array)json_decode($msg) : (array)$msg;
 
-            $command = new Command($conn, $this->users);
-            $command->select($msg);
+            if ($msg != NULL && $msg != false) {
+                if (isset($msg['secret']) && $msg['secret'] === $this->secret) {
+                    $command = new Command($conn, $this->users);
+                    $command->select($msg);
+                } else {
+                    throw new \RuntimeException('Não autorizado', 401);
+                }
+            } else {
+                throw new \RuntimeException('Mensagem fora do padrão JSON', 422);
+            }
 
         } catch (\RuntimeException $e) {
             $this->users[$conn->resourceId]->send($this->errorResponse($e->getMessage(), $e->getCode()));

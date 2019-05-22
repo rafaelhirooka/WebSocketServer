@@ -11,5 +11,5 @@ require __DIR__ . '/bootstrap/app.php';
 
 
 $app = new Ratchet\App($configW['host'], $configW['port']);
-$app->route('/', new \App\Sender(), array('*'));
+$app->route('/', new \App\Sender($configS), array('*'));
 $app->run();

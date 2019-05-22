@@ -8,8 +8,11 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+cli_set_process_title('Websocket PHP');
+
 $configD = include __DIR__ . '/../config/database.php';
 $configW = include __DIR__ . '/../config/websocket.php';
+$configS = include __DIR__ . '/../config/secret.php';
 
 $capsule= new Illuminate\Database\Capsule\Manager();
 $capsule->addConnection([
