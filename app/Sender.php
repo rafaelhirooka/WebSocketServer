@@ -35,20 +35,20 @@ class Sender implements MessageComponentInterface
     }
 
     function onOpen(ConnectionInterface $conn) {
-        $this->clients->attach($conn);
+        /*$this->clients->attach($conn);
         $this->users[$conn->resourceId] = $conn;
         Manager::table('active_connections')->insert([
             'active_connection_id' => md5(uniqid(rand(), true)),
             'connection_id' => $conn->resourceId
-        ]);
+        ]);*/
     }
 
     function onClose(ConnectionInterface $conn) {
-        $this->clients->detach($conn);
+        /*$this->clients->detach($conn);
         unset($this->users[$conn->resourceId]);
         unset($this->subscriptions[$conn->resourceId]);
         Manager::table('active_connections')->where('connection_id', $conn->resourceId)->delete();
-        Manager::table('subscribes')->where('connection_id', $conn->resourceId)->delete();
+        Manager::table('subscribes')->where('connection_id', $conn->resourceId)->delete();*/
     }
 
     public function onMessage(ConnectionInterface $conn, $msg) {
@@ -57,8 +57,8 @@ class Sender implements MessageComponentInterface
 
             if ($msg != NULL && $msg != false) {
                 if (isset($msg['secret']) && $msg['secret'] === $this->secret) {
-                    $command = new Command($conn, $this->users);
-                    $command->select($msg);
+                    $command = new Command($conn);
+                    $command->select($msg, $this->users);
                 } else {
                     throw new \RuntimeException('Não autorizado', 401);
                 }
@@ -67,9 +67,9 @@ class Sender implements MessageComponentInterface
             }
 
         } catch (\RuntimeException $e) {
-            $this->users[$conn->resourceId]->send($this->errorResponse($e->getMessage(), $e->getCode()));
+            $conn->send($this->errorResponse($e->getMessage(), $e->getCode()));
         } catch (\Exception $e) {
-            $this->users[$conn->resourceId]->send($this->errorResponse($e->getMessage(), 400));
+            $conn->send($this->errorResponse($e->getMessage(), 400));
         }
     }
 }

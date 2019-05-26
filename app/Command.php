@@ -15,23 +15,52 @@ class Command {
 
     private $conn;
 
-    private $users;
-
-    public function __construct(ConnectionInterface $conn, $users) {
+    public function __construct(ConnectionInterface $conn) {
         $this->conn = $conn;
-        $this->users = $users;
     }
 
-    public function select(array $command) {
+    public function select(array $command, &$users) {
         try {
             switch ($command['command']) {
 
+                case 'connect':
+                    if (isset($command['sessionId']) && !empty($command['sessionId'])) {
+                        $users[$command['sessionId']] = $this->conn;
+                    } else {
+                        $sessionId = md5(uniqid(rand(), true));
+
+                        Manager::table('active_connections')->insert([
+                            'active_connection_id' => md5(uniqid(rand(), true)),
+                            'connection_id' => $sessionId
+                        ]);
+
+                        $users[$sessionId] = $this->conn;
+
+                        $this->conn->send(json_encode(['sessionId' => $sessionId]));
+                    }
+
+                    break;
+
+                case 'disconnect':
+
+                    Manager::table('active_connections')->where('connection_id', $command['sessionId'])->delete();
+
+                    unset($users[$command['sessionId']]);
+
+                    break;
+
                 case 'subscribe':
+
                     Manager::table('subscribes')->insert([
                         'subscribe_id' => md5(uniqid(rand(), true)),
-                        'connection_id' => $this->conn->resourceId,
+                        'connection_id' => $command['sessionId'],
                         'channel' => $command['channel']
                     ]);
+
+                    break;
+
+                case 'unsubscribe':
+                    Manager::table('subscribes')->where('connection_id', $command['sessionId'])->delete();
 
                     break;
 
@@ -40,13 +69,13 @@ class Command {
                         ->where('channel', $command['channel']);
 
                     if (isset($command['excludeMe']) && $command['excludeMe'] == 'true')
-                        $clients = $clients->where('user', '<>', $this->conn->resourceId);
+                        $clients = $clients->where('user', '<>', $command['sessionId']);
 
                     $clients = $clients->get();
 
                     if ($clients != NULL && !empty($clients)) {
                         foreach ($clients as $client) {
-                            $this->users[$client->connection_id]->send($command['message']);
+                            $this->conn->send($command['message']);
                         }
                     }
 
