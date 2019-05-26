@@ -75,7 +75,7 @@ class Command {
 
                     if ($clients != NULL && !empty($clients)) {
                         foreach ($clients as $client) {
-                            $this->conn->send($command['message']);
+                            $users[$client->connection_id]->send($command['message']);
                         }
                     }
 
