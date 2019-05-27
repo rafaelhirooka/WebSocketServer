@@ -25,7 +25,15 @@ class Command {
 
                 case 'connect':
                     if (isset($command['sessionId']) && !empty($command['sessionId'])) {
-                        $users[$command['sessionId']] = $this->conn;
+                        $r = Manager::table('active_connections')->where(
+                            'connection_id', $command['sessionId']
+                        )->count();
+
+                        if ($r > 0)
+                            $users[$command['sessionId']] = $this->conn;
+                        else
+                            throw new \RuntimeException('Sessão não é válida. Faça login novamente', 404);
+
                     } else {
                         $sessionId = md5(uniqid(rand(), true));
 
@@ -36,7 +44,7 @@ class Command {
 
                         $users[$sessionId] = $this->conn;
 
-                        $this->conn->send(json_encode(['sessionId' => $sessionId]));
+                        $this->conn->send(json_encode(['data' => 'success', 'sessionId' => $sessionId, 'command' => $command['command']]));
                     }
 
                     break;
@@ -46,6 +54,8 @@ class Command {
                     Manager::table('active_connections')->where('connection_id', $command['sessionId'])->delete();
 
                     unset($users[$command['sessionId']]);
+
+                    $this->conn->send(json_encode(['data' => 'success', 'command' => $command['command']]));
 
                     break;
 
@@ -57,10 +67,14 @@ class Command {
                         'channel' => $command['channel']
                     ]);
 
+                    $this->conn->send(json_encode(['data' => 'success', 'command' => $command['command']]));
+
                     break;
 
                 case 'unsubscribe':
                     Manager::table('subscribes')->where('connection_id', $command['sessionId'])->delete();
+
+                    $this->conn->send(json_encode(['data' => 'success', 'command' => $command['command']]));
 
                     break;
 
@@ -75,9 +89,11 @@ class Command {
 
                     if ($clients != NULL && !empty($clients)) {
                         foreach ($clients as $client) {
-                            $users[$client->connection_id]->send($command['message']);
+                            $users[$client->connection_id]->send(json_encode(['data' => 'success', 'message' => $command['message'], 'command' => $command['command']]));
                         }
                     }
+
+                    $this->conn->send(json_encode(['data' => 'success', 'command' => $command['command']]));
 
                     break;
 
@@ -87,9 +103,9 @@ class Command {
                     break;
             }
         } catch (\RuntimeException $e) {
-            throw new \RuntimeException($e->getMessage(), $e->getCode());
+            $this->conn->send(json_encode(['data' => 'error', 'message' => $e->getMessage(), 'code' => $e->getCode()]));
         } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+            $this->conn->send(json_encode(['data' => 'error', 'message' => $e->getMessage(), 'code' => 400]));
         }
     }
 }
